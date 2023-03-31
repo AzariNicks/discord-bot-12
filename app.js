@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+function  cl  (thingYouWantToLog)  {console.log(thingYouWantToLog)}
 import {
   InteractionType,
   InteractionResponseType,
@@ -7,25 +8,21 @@ import {
   MessageComponentTypes,
   ButtonStyleTypes,
 } from 'discord-interactions';
-import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { getShuffledOptions, getResult } from './game.js';
-
+import { VerifyDiscordRequest, DiscordRequest, getRandomComplimentLovely } from './utils.js';
+const DISCORD_API_BASE_URL = 'https://discord.com/api/v9';
 // Create an express app
 const app = express();
 // Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
 // Parse request body and verifies incoming requests using discord-interactions package
 app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
-
-// Store for in-progress games. In production, you'd want to use a DB
-const activeGames = {};
-
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
  */
 app.post('/interactions', async function (req, res) {
   // Interaction type and data
   const { type, id, data } = req.body;
+
 
   /**
    * Handle verification requests
@@ -40,21 +37,38 @@ app.post('/interactions', async function (req, res) {
    */
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
-
-    // "test" command
-    if (name === 'test') {
+    const { options } = data
+  
+   console.log(`Bot Used`)
+    let ToUserId = options[0].value
+    let fromUser =  req.body.member.user.username
+    let toUser = 'Kathleen'
+    const response = await fetch(`https://discord.com/api/v9/users/${ToUserId}`, {
+      headers: {
+        'Authorization': `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+    let toUserValid = await response.json();
+    if(toUserValid.username != undefined){
+      toUser = toUserValid.username
+    }
+     if (name === 'compliment') {
       // Send a message into the channel where command was triggered from
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          // Fetches a random emoji to send from a helper function
-          content: 'hello world ' + getRandomEmoji(),
+          // The data is the thing it sends and i made it to where it sends a random complement
+          content: getRandomComplimentLovely(fromUser,toUser),
         },
       });
     }
+
   }
 });
+
+
 
 app.listen(PORT, () => {
   console.log('Listening on port', PORT);
 });
+
